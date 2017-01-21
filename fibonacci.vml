@@ -1,0 +1,23 @@
+read
+add -1
+store [-1] //n
+load 0
+store [-2] //a=0
+load 1
+store [-3] //b=1  //loop
+	load [-2]   //a
+	store[-4]   //t=a
+	load [-3]   //b
+	store [-2]  //a=b
+	add [-4]    //b+t
+	store [-3]  //b=b+t
+	/*
+
+	load [-1]   //n
+	add -1      //n-1
+	*/
+	store [-1]  //n=n-1
+jg loop         //n>0
+load [-3]   //b
+print
+halt
