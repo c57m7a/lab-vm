@@ -24,7 +24,6 @@ class BytecodeInputStream(private val dataInputStream: DataInputStream) {
             10 -> Command.Jump(dataInputStream.readInt())
             else -> throw IllegalArgumentException("Unknown opcode $opcode")
         }
-        println(command)
         command
     } catch (e: EOFException) {
         null

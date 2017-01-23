@@ -1,26 +1,40 @@
+import java.io.DataInputStream
+import java.io.FileInputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.*
+import kotlin.system.exitProcess
 
-class VM(val commands: List<Command>,
-         val userInputStream: InputStream,
-         val outputStream: OutputStream) : Runnable {
+fun main(args: Array<String>) {
+    val debugOutputStream = when {
+        args.size == 1 -> null
+        args.size == 2 && args[1] == "--debug" -> System.out
+        else -> usageError()
+    }
+    val fileName = args[0]
 
-    var currentOpIndex = 0; internal set
-    var interrupted = false; internal set
-    val ram = RAM()
-
-    override fun run() {
-        do {
-            val nextCommand = getCommand(currentOpIndex)
-            printDebug(nextCommand)
-            nextCommand.run(vm = this)
-            ++currentOpIndex
-        } while (!interrupted)
+    println("Running '$fileName'")
+    val commands = DataInputStream(FileInputStream(fileName)).use {
+        BytecodeInputStream(it).commands
     }
 
-    private fun getCommand(index: Int) = commands.getOrNull(index) ?: throw Exception("Can't get command #$index")
+    val vm = VM(commands, userInputStream, userOutputStream, debugOutputStream)
+    vm.run()
+}
 
-    private fun printDebug(nextCommand: Command) {
-        System.out.printf("\n#%2d %-14s", currentOpIndex + 1, nextCommand.toString())
+val userInputStream = object : InputStream() {
+    val scanner = Scanner(System.`in`)
+    override fun read(): Int {
+        print("Input: ")
+        return scanner.nextInt()
     }
+}
+
+val userOutputStream = object : OutputStream() {
+    override fun write(b: Int) = println("\tOutput: $b")
+}
+
+private fun usageError(): Nothing {
+    System.err.print("Usage: <input file> [--debug]\n")
+    exitProcess(-1)
 }

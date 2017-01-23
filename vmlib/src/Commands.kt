@@ -6,9 +6,7 @@ sealed class Command {
             interrupted = true
         }
 
-        override fun toString(): String {
-            return "Halt"
-        }
+        override fun toString() = "Halt"
     }
 
     class Read : Command() {
@@ -16,9 +14,7 @@ sealed class Command {
             ram[0] = userInputStream.read()
         }
 
-        override fun toString(): String {
-            return "Read"
-        }
+        override fun toString() = "Read"
     }
 
     class Write : Command() {
@@ -26,9 +22,7 @@ sealed class Command {
             outputStream.write(ram[0])
         }
 
-        override fun toString(): String {
-            return "Write"
-        }
+        override fun toString() = "Write"
     }
 
     class Load(val value: Value) : Command() {
@@ -36,9 +30,7 @@ sealed class Command {
             ram[0] = value.get(ram)
         }
 
-        override fun toString(): String {
-            return "Load $value"
-        }
+        override fun toString() = "Load $value"
     }
 
     class Store(val ref: Value.Ref) : Command() {
@@ -47,9 +39,7 @@ sealed class Command {
             ram[index] = ram[0]
         }
 
-        override fun toString(): String {
-            return "Store $ref"
-        }
+        override fun toString() = "Store $ref"
     }
 
     class Neg : Command() {
@@ -57,9 +47,7 @@ sealed class Command {
             ram[0] = -ram[0]
         }
 
-        override fun toString(): String {
-            return "Neg"
-        }
+        override fun toString() = "Neg"
     }
 
     class LShift(val value: Value) : Command() {
@@ -67,9 +55,7 @@ sealed class Command {
             ram[0] = ram[0] shl value.get(ram)
         }
 
-        override fun toString(): String {
-            return "LShift $value"
-        }
+        override fun toString() = "LShift $value"
     }
 
     class RShift(val value: Value) : Command() {
@@ -77,9 +63,7 @@ sealed class Command {
             ram[0] = ram[0] shr value.get(ram)
         }
 
-        override fun toString(): String {
-            return "RShift $value"
-        }
+        override fun toString() = "RShift $value"
     }
 
     class Add(val value: Value) : Command() {
@@ -87,9 +71,7 @@ sealed class Command {
             ram[0] = ram[0] + value.get(ram)
         }
 
-        override fun toString(): String {
-            return "Add $value"
-        }
+        override fun toString() = "Add $value"
     }
 
     class Jg(distance: Int? = null) : Jump(distance) {
@@ -99,9 +81,7 @@ sealed class Command {
             }
         }
 
-        override fun toString(): String {
-            return "Jg $distance"
-        }
+        override fun toString() = "Jg $distance"
     }
 
     open class Jump(open var distance: Int? = null) : Command() {
@@ -109,8 +89,6 @@ sealed class Command {
             currentOpIndex += distance ?: throw RuntimeException("jump distance is null")
         }
 
-        override fun toString(): String {
-            return "Jump $distance"
-        }
+        override fun toString() = "Jump $distance"
     }
 }
