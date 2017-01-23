@@ -14,12 +14,13 @@ fun main(args: Array<String>) {
     val fileName = args[0]
 
     println("Running '$fileName'")
-    val commands = DataInputStream(FileInputStream(fileName)).use {
-        BytecodeInputStream(it).commands
-    }
+    val fileInputStream = FileInputStream(fileName)
+    val dataInputStream = DataInputStream(fileInputStream)
+    val commands = BytecodeInputStream(dataInputStream).commands
 
     val vm = VM(commands, userInputStream, userOutputStream, debugOutputStream)
     vm.run()
+    println("\nProgram exit (line ${vm.currentOpIndex})")
 }
 
 val userInputStream = object : InputStream() {
@@ -35,6 +36,6 @@ val userOutputStream = object : OutputStream() {
 }
 
 private fun usageError(): Nothing {
-    System.err.print("Usage: <input file> [--debug]\n")
+    System.err.println("Usage: <input file> [--debug]")
     exitProcess(-1)
 }

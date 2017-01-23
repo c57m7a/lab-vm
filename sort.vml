@@ -13,7 +13,6 @@ jg readloop
 iloop:
 	load [-1]
 	add -1
-	halt
 	store [-2]
 	
 	jloop:

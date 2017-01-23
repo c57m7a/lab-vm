@@ -6,36 +6,36 @@ class BytecodeOutputStream(private val dataOutputStream: DataOutputStream) {
 
     fun write(command: Command) = with(dataOutputStream) {
         when (command) {
-            is Command.Halt -> writeInt(0)
-            is Command.Read -> writeInt(1)
-            is Command.Write -> writeInt(2)
+            is Command.Halt -> writeByte(0)
+            is Command.Read -> writeByte(1)
+            is Command.Write -> writeByte(2)
             is Command.Load -> {
-                writeInt(3)
+                writeByte(3)
                 writeValue(command.value)
             }
             is Command.Store -> {
-                writeInt(4)
+                writeByte(4)
                 writeValue(command.ref)
             }
-            is Command.Neg -> writeInt(5)
+            is Command.Neg -> writeByte(5)
             is Command.LShift -> {
-                writeInt(6)
+                writeByte(6)
                 writeValue(command.value)
             }
             is Command.RShift -> {
-                writeInt(7)
+                writeByte(7)
                 writeValue(command.value)
             }
             is Command.Add -> {
-                writeInt(8)
+                writeByte(8)
                 writeValue(command.value)
             }
             is Command.Jg -> {
-                writeInt(9)
+                writeByte(9)
                 writeInt(command.distance!!)
             }
             is Command.Jump -> {
-                writeInt(10)
+                writeByte(10)
                 writeInt(command.distance!!)
             }
         }
@@ -49,7 +49,7 @@ class BytecodeOutputStream(private val dataOutputStream: DataOutputStream) {
             ref = ref.v
         }
         ref as Value.Number
-        writeInt(i)
+        writeByte(i)
         writeInt(ref.intValue)
     }
 }

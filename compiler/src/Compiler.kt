@@ -9,6 +9,7 @@ fun main(args: Array<String>) {
     val outputPath = args.getOrNull(1) ?: inputPath.replaceAfterLast(
             delimiter = '.', replacement = "vmc", missingDelimiterValue = ".vmc"
     )
+    println("Compiling '$inputPath' -> '$outputPath'")
     val inputStream = FileInputStream(inputPath)
     val outputStream = FileOutputStream(outputPath)
 
@@ -16,7 +17,10 @@ fun main(args: Array<String>) {
         val parser = VMLangParser(inputStream)
         val commands = parser.commands
         val bytecodeOutputStream = BytecodeOutputStream(outputStream)
-        commands.forEach(bytecodeOutputStream::write)
+        commands.forEachIndexed { i, command ->
+            println("#$i writing command '$command'")
+            bytecodeOutputStream.write(command)
+        }
         println("Done.")
     } finally {
         inputStream.close()
@@ -25,7 +29,6 @@ fun main(args: Array<String>) {
 }
 
 private fun usageError(): Nothing {
-    System.err.print("Usage: compile <input file> [output file]")
+    System.err.println("Usage: compile <input file> [output file]")
     exitProcess(-1)
-
 }

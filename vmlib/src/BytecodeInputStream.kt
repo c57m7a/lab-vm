@@ -8,7 +8,7 @@ class BytecodeInputStream(private val dataInputStream: DataInputStream) {
     val commands = generateSequence(this::readCommand).toList()
 
     private fun readCommand(): Command? = try {
-        val opcode = dataInputStream.readInt()
+        val opcode = dataInputStream.readByte().toInt()
         val command = when (opcode) {
             -1 -> null
             0 -> Command.Halt()
@@ -30,7 +30,7 @@ class BytecodeInputStream(private val dataInputStream: DataInputStream) {
     }
 
     private fun readValue(): Value {
-        val type = dataInputStream.readInt()
+        val type = dataInputStream.readByte().toInt()
         val number = Value.Number(dataInputStream.readInt())
         return when (type) {
             0 -> number

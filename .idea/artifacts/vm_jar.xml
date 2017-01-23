@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="vm:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/vm_jar</output-path>
+    <root id="archive" name="vm.jar">
+      <element id="module-output" name="vm" />
+      <element id="module-output" name="vmlib" />
+      <element id="extracted-dir" path="$KOTLIN_BUNDLED$/lib/kotlin-runtime.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
