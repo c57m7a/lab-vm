@@ -1,15 +1,16 @@
+import java.io.DataInputStream
 import java.io.EOFException
 import java.io.InputStream
 
-class BytecodeParser(private val inputStream: InputStream) {
-    fun parse(): List<Command> {
-        val commands = generateSequence(this::readCommand).toList()
-        return commands
-    }
+class BytecodeInputStream(private val dataInputStream: DataInputStream) {
+    constructor(inputStream: InputStream) : this(DataInputStream(inputStream))
+
+    val commands = generateSequence(this::readCommand).toList()
 
     private fun readCommand(): Command? = try {
-        val opcode = inputStream.read()
-        when (opcode) {
+        val opcode = dataInputStream.readInt()
+        val command = when (opcode) {
+            -1 -> null
             0 -> Command.Halt()
             1 -> Command.Read()
             2 -> Command.Write()
@@ -19,22 +20,24 @@ class BytecodeParser(private val inputStream: InputStream) {
             6 -> Command.LShift(readValue())
             7 -> Command.RShift(readValue())
             8 -> Command.Add(readValue())
-            9 -> Command.Jump(inputStream.read())
-            10 -> Command.Jg(inputStream.read())
+            9 -> Command.Jg(dataInputStream.readInt())
+            10 -> Command.Jump(dataInputStream.readInt())
             else -> throw IllegalArgumentException("Unknown opcode $opcode")
         }
+        println(command)
+        command
     } catch (e: EOFException) {
         null
     }
 
     private fun readValue(): Value {
-        val type = inputStream.read()
-        val number = Value.Number(inputStream.read())
+        val type = dataInputStream.readInt()
+        val number = Value.Number(dataInputStream.readInt())
         return when (type) {
             0 -> number
             1 -> Value.Ref(number)
             2 -> Value.Ref(Value.Ref(number))
-            else -> throw IllegalArgumentException("Invalid param type")
+            else -> throw IllegalArgumentException("Invalid param type $type")
         }
     }
 }

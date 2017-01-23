@@ -5,11 +5,19 @@ sealed class Command {
         override fun run(vm: VM) = with(vm) {
             interrupted = true
         }
+
+        override fun toString(): String {
+            return "Halt"
+        }
     }
 
     class Read : Command() {
         override fun run(vm: VM) = with(vm) {
             ram[0] = userInputStream.read()
+        }
+
+        override fun toString(): String {
+            return "Read"
         }
     }
 
@@ -17,11 +25,19 @@ sealed class Command {
         override fun run(vm: VM) = with(vm) {
             outputStream.write(ram[0])
         }
+
+        override fun toString(): String {
+            return "Write"
+        }
     }
 
     class Load(val value: Value) : Command() {
         override fun run(vm: VM) = with(vm) {
             ram[0] = value.get(ram)
+        }
+
+        override fun toString(): String {
+            return "Load $value"
         }
     }
 
@@ -30,11 +46,19 @@ sealed class Command {
             val index = ref.v.get(ram)
             ram[index] = ram[0]
         }
+
+        override fun toString(): String {
+            return "Store $ref"
+        }
     }
 
     class Neg : Command() {
         override fun run(vm: VM) = with(vm) {
             ram[0] = -ram[0]
+        }
+
+        override fun toString(): String {
+            return "Neg"
         }
     }
 
@@ -42,11 +66,19 @@ sealed class Command {
         override fun run(vm: VM) = with(vm) {
             ram[0] = ram[0] shl value.get(ram)
         }
+
+        override fun toString(): String {
+            return "LShift $value"
+        }
     }
 
     class RShift(val value: Value) : Command() {
         override fun run(vm: VM) = with(vm) {
             ram[0] = ram[0] shr value.get(ram)
+        }
+
+        override fun toString(): String {
+            return "RShift $value"
         }
     }
 
@@ -54,19 +86,31 @@ sealed class Command {
         override fun run(vm: VM) = with(vm) {
             ram[0] = ram[0] + value.get(ram)
         }
-    }
 
-    class Jump(val distance: Int) : Command() {
-        override fun run(vm: VM) = with(vm) {
-            currentOpIndex += distance
+        override fun toString(): String {
+            return "Add $value"
         }
     }
 
-    class Jg(val distance: Int) : Command() {
-        override fun run(vm: VM) = with(vm) {
-            if (ram[0] > 0) {
-                currentOpIndex += distance
+    class Jg(distance: Int? = null) : Jump(distance) {
+        override fun run(vm: VM) {
+            if (vm.ram[0] > 0) {
+                super.run(vm)
             }
+        }
+
+        override fun toString(): String {
+            return "Jg $distance"
+        }
+    }
+
+    open class Jump(open var distance: Int? = null) : Command() {
+        override fun run(vm: VM) = with(vm) {
+            currentOpIndex += distance ?: throw RuntimeException("jump distance is null")
+        }
+
+        override fun toString(): String {
+            return "Jump $distance"
         }
     }
 }

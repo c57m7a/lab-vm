@@ -9,29 +9,18 @@ class VM(val commands: List<Command>,
     var interrupted = false; internal set
     val ram = RAM()
 
-    override fun run() = try {
+    override fun run() {
         do {
-            val nextCommand = commands.getOrNull(currentOpIndex) ?: throw Exception("End of stream (line #$currentOpIndex)")
-            //printDebug(nextCommand)
+            val nextCommand = getCommand(currentOpIndex)
+            printDebug(nextCommand)
             nextCommand.run(vm = this)
             ++currentOpIndex
         } while (!interrupted)
-    } finally {
-        userInputStream.close()
-        outputStream.close()
     }
+
+    private fun getCommand(index: Int) = commands.getOrNull(index) ?: throw Exception("Can't get command #$index")
 
     private fun printDebug(nextCommand: Command) {
-        val clazz = nextCommand::class.java
-        System.out.printf("\n#%2d %-8s", currentOpIndex + 1, clazz.simpleName)
-        val params = clazz.declaredFields.joinToString {
-            it.isAccessible = true
-            val field = it.get(nextCommand)
-            field.toString()
-        }
-        if (params.isNotEmpty()) {
-            System.out.printf("%-7s", params)
-        }
+        System.out.printf("\n#%2d %-14s", currentOpIndex + 1, nextCommand.toString())
     }
-
 }

@@ -1,47 +1,118 @@
 import java.io.InputStream
 import java.util.*
+import kotlin.system.exitProcess
 
-class VMLangParser(private val inputStream: InputStream) {
-    fun parse(): ArrayList<Command> {
-        val multiLineComment = """(\/\*(?s).*?\*\/)"""
-        val singleLineComment = """(\/\/.*)"""
-        val delimiter = "($multiLineComment|$singleLineComment| |\\t|\\r|\\n)+"
+private const val singleLineComment = """(\/\/.*)"""
+private const val wordDelimiter = "($singleLineComment| |\\t|\\r|\\n)+"
 
-        val scanner = Scanner(inputStream).useDelimiter(delimiter.toPattern())
-        val iterator = scanner.iterator()
+class VMLangParser(inputStream: InputStream) {
+    val currentPosition = Position("", 0, 0)
+    var opIndex = 0
 
-        val result = ArrayList<Command>()
-        var opIndex = 0
-        val labels = HashMap<String, Int>()
-        iterator.forEach { s ->
-            if (s.endsWith(':')) {
-                labels.put(s, opIndex)
-                return@forEach
+    data class Position(var line: String, var lineIndex: Int, var charIndex: Int) {
+
+        override fun toString() = buildString {
+            appendln("line $lineIndex:")
+            appendln(line)
+            append(CharArray(charIndex) { ' ' })
+            append('^')
+        }
+    }
+
+    private val notInitializedJumps = LinkedList<Jump>()
+
+    private data class Jump(val jump: Command.Jump, val opIndex: Int, val label: String, val position: Position)
+
+    val words = buildIterator {
+        Scanner(inputStream).useDelimiter("\n").forEach { rawLine ->
+            ++(currentPosition.lineIndex)
+            currentPosition.line = rawLine.takeWhile { it != '\'' }
+            val wordsScanner = Scanner(currentPosition.line).useDelimiter(wordDelimiter)
+            wordsScanner.forEach { s ->
+                currentPosition.charIndex = wordsScanner.match().end()
+                yield(s)
             }
-            result.add(when (s) {
+        }
+    }
+
+    val commands: List<Command> by lazy {
+        val result = ArrayList<Command>()
+        val labels = HashMap<String, Int>()
+        for (word in words) {
+            if (word.endsWith(':')) {
+                labels.put(word.dropLast(1), opIndex)
+                continue
+            }
+            result.add(when (word) {
                 "halt" -> Command.Halt()
                 "read" -> Command.Read()
                 "write" -> Command.Write()
-                "load" -> Command.Load(readValue(iterator.next()))
-                "store" -> Command.Store(readValue(iterator.next()) as? Value.Ref ?: throw IllegalArgumentException("Reference expected"))
+                "load" -> Command.Load(readValue())
+                "store" -> Command.Store(readValue() as? Value.Ref ?: parseException("Reference expected"))
                 "neg" -> Command.Neg()
-                "lshift" -> Command.LShift(readValue(iterator.next()))
-                "rshift" -> Command.RShift(readValue(iterator.next()))
-                "add" -> Command.Add(readValue(iterator.next()))
-                "jmp" -> Command.Jump(labels[iterator.next()]!!)
-                "jg" -> Command.Jg(labels[iterator.next()]!!)
-                else -> throw IllegalArgumentException("Unknown symbol $s")
+                "lshift" -> Command.LShift(readValue())
+                "rshift" -> Command.RShift(readValue())
+                "add" -> Command.Add(readValue())
+                "jump" -> initJump(Command.Jump(), labels)
+                "jg" -> initJump(Command.Jg(), labels)
+                else -> parseException("Unknown symbol $word")
             })
             ++opIndex
         }
-        return result
+
+        checkJumps(labels)
+        return@lazy result
     }
 
-    private fun readValue(s: String): Value {
-        if (s[0] == '[' && s.last() == ']') {
-            return Value.Ref(readValue(s.substring(1..s.length - 1)))
+    private fun checkJumps(labels: HashMap<String, Int>) {
+        val filtered = notInitializedJumps.filter { (jump, opIndex, label) ->
+            val targetLineIndex = labels[label]
+            if (targetLineIndex != null) {
+                jump.distance = targetLineIndex - opIndex - 1
+            }
+            targetLineIndex == null
         }
-        val intValue = s.toIntOrNull() ?: throw NumberFormatException()
+        if (filtered.isNotEmpty()) {
+            System.err.println(filtered.joinToString(prefix = "Unknown labels:\n", separator = "\n") {
+                it.position.toString()
+            })
+            exitProcess(-1)
+        }
+    }
+
+    private fun readValue(): Value {
+        if (!words.hasNext()) {
+            parseException("Value expected")
+        }
+        return parseValue(words.next())
+    }
+
+    private fun initJump(jump: Command.Jump, labels: HashMap<String, Int>): Command.Jump {
+        val label = words.next()
+        val targetLineIndex = labels[label]
+        if (targetLineIndex == null) {
+            notInitializedJumps.add(Jump(jump, opIndex, label, currentPosition.copy()))
+        } else {
+            jump.distance = targetLineIndex - opIndex - 1
+        }
+        return jump
+    }
+
+    private fun parseException(msg: String): Nothing {
+        with(System.err) {
+            println(msg)
+            println(currentPosition)
+        }
+        exitProcess(-1)
+    }
+
+    private fun parseValue(s: String): Value {
+        if (s[0] == '[' && s.last() == ']') {
+            ++(currentPosition.charIndex)
+            val substring = s.substring(1..s.length - 2)
+            return Value.Ref(parseValue(substring))
+        }
+        val intValue = s.toIntOrNull() ?: parseException("Number expected")
         return Value.Number(intValue)
     }
 }

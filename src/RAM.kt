@@ -4,9 +4,9 @@ class RAM(val map: MutableMap<Int, Int>) : MutableMap<Int, Int> by map {
     override operator fun get(key: Int) = map[key] ?: throw NoSuchElementException()
 
     override fun put(key: Int, value: Int): Int? {
-        /*print(kvToString(key, value))
+        print(kvToString(key, value))
         if (containsKey(key))
-            print("\told: ${this[key]}")*/
+            print("\told: ${this[key]}")
         return map.put(key, value)
     }
 
